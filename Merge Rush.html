@@ -1,0 +1,669 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Merge Rush</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap">
+<style>
+/* Layout concept: a pit-board scoreboard on a dot-matrix ground. The cage grid is centre stage; the score, the 24-round wheel track and the vault read as instrument strips around it. */
+:root {
+  --bg: #F2F2F6;
+  --panel: #FFFFFF;
+  --tile: #E9E9F0;
+  --ink: #1A1A20;
+  --muted: #5E5E6C;
+  --line: #D6D6E0;
+  --dot: #C8C8D4;
+  --gold: #8A5600;
+  --gold-fill: #F2B705;
+  --blue: #3556D8;
+  --btn-bg: #1A1A20;
+  --btn-fg: #F7F7FA;
+  --spr-o: #3A2418;
+  --spr-e: #1A1A20;
+  --spr-l: #FFF3DC;
+  --spr-n: #E0587C;
+  --font-display: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+  --font-body: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17171C; --panel: #1F1F26; --tile: #2E2E38; --ink: #F1F1F5; --muted: #A3A3B3;
+    --line: #3A3A47; --dot: #2A2A34; --gold: #F2B705; --blue: #8FA6FF;
+    --btn-bg: #F2B705; --btn-fg: #1A1A20; --spr-o: #0B0B0F; --spr-e: #0B0B0F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17171C; --panel: #1F1F26; --tile: #2E2E38; --ink: #F1F1F5; --muted: #A3A3B3;
+  --line: #3A3A47; --dot: #2A2A34; --gold: #F2B705; --blue: #8FA6FF;
+  --btn-bg: #F2B705; --btn-fg: #1A1A20; --spr-o: #0B0B0F; --spr-e: #0B0B0F;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.3px);
+  background-size: 14px 14px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 20px 44px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  min-height: 100%;
+}
+.shell { max-width: 720px; margin: 0 auto; display: grid; gap: 14px; }
+.shell > * { min-width: 0; }
+
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: .05em; line-height: 1.1; }
+h1 span { color: var(--gold); }
+.tag { margin: 4px 0 0; color: var(--muted); font-size: 14px; text-wrap: balance; }
+h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button {
+  font: 600 12px var(--font-body); letter-spacing: .04em; padding: 7px 12px; border: 0; background: transparent;
+  color: var(--muted); cursor: pointer; min-height: 34px;
+}
+.seg button[aria-pressed="true"] { background: var(--btn-bg); color: var(--btn-fg); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+
+.dash { display: grid; gap: 14px; }
+.dash-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.score-num { display: block; font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
+.rate { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ghost {
+  font: 600 13px var(--font-body); min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1.5px solid var(--line);
+  background: transparent; color: var(--ink); cursor: pointer;
+}
+.track-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.track-head b { font-weight: 600; }
+.track-head span { color: var(--muted); }
+.dots { display: grid; grid-template-columns: repeat(24, 1fr); gap: 4px; }
+.d { aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--line); min-width: 0; }
+.d.nap { background: var(--muted); border-color: var(--muted); }
+.d.jog { background: var(--blue); border-color: var(--blue); }
+.d.zoomies { background: var(--gold-fill); border-color: var(--gold-fill); }
+.d.now { border-color: var(--ink); animation: pulse 1.3s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.35); } }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
+.legend .nap { background: var(--muted); } .legend .jog { background: var(--blue); } .legend .zoomies { background: var(--gold-fill); }
+
+.cage-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.seed-note { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tile, .slot { aspect-ratio: 1; border-radius: 8px; min-width: 0; }
+.tile {
+  position: relative; display: grid; place-items: center; padding: 10px; background: var(--tile);
+  border: 2px solid transparent; cursor: pointer; font: inherit; color: inherit;
+}
+.tile svg { width: 100%; height: auto; display: block; max-height: 100%; }
+.tile.cool svg { opacity: .42; filter: saturate(.4); }
+.tile.sel { outline: 3px solid var(--blue); outline-offset: 1px; }
+.tile.pair { border: 2px dashed var(--gold); }
+.tile.max svg { filter: drop-shadow(0 0 5px var(--gold-fill)); }
+.tile[disabled] { cursor: default; }
+.slot { border: 2px dashed var(--line); }
+.chip {
+  position: absolute; font-family: var(--font-display); font-size: 11px; line-height: 1; padding: 3px 4px 2px; border-radius: 3px;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+}
+.chip.lv { top: 4px; left: 4px; }
+.chip.cd { bottom: 4px; left: 4px; color: var(--muted); }
+.pop { animation: pop .3s ease-out; }
+@keyframes pop { 0% { transform: scale(.55); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.detail { margin: 12px 0 0; min-height: 3em; font-size: 14px; color: var(--ink); text-wrap: pretty; }
+
+.actions { display: grid; grid-template-columns: 1fr 1.7fr; gap: 10px; }
+.btn {
+  font: 600 15px var(--font-body); min-height: 52px; padding: 0 16px; border-radius: 8px; border: 1.5px solid var(--ink);
+  background: transparent; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.btn[disabled], .ghost[disabled] { opacity: .4; cursor: not-allowed; }
+.wheel { flex: none; }
+.spinning .wheel { animation: rot .85s cubic-bezier(.2, .7, .2, 1); }
+@keyframes rot { to { transform: rotate(720deg); } }
+
+.vault-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.vault-head p { margin: 0; font-size: 12px; color: var(--muted); }
+.vault-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.vt { display: grid; gap: 6px; justify-items: center; min-width: 0; }
+.vt .tile { width: 100%; cursor: default; padding: 8px; }
+.vt .y { font-family: var(--font-display); font-size: 12px; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.log ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.log li { font-size: 13px; color: var(--muted); padding-left: 12px; border-left: 2px solid var(--line); text-wrap: pretty; }
+.log li:first-child { color: var(--ink); border-left-color: var(--gold-fill); }
+
+.end { display: grid; gap: 12px; border-color: var(--gold-fill); border-width: 2px; }
+.end h3 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.end .big { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
+.end .rank { font-size: 18px; font-weight: 700; margin: 0; }
+.end .best { margin: 0; color: var(--muted); font-size: 13px; }
+.share { display: flex; gap: 8px; flex-wrap: wrap; }
+.share input {
+  flex: 1 1 220px; min-width: 0; font: 13px var(--font-body); padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--line);
+  background: var(--bg); color: var(--ink);
+}
+.end-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.end-actions .btn { min-height: 46px; }
+
+details.rules { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+details.rules summary { cursor: pointer; padding: 14px 0; font-weight: 600; font-size: 14px; }
+details.rules ol { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; max-width: 65ch; }
+.foot { margin: 0; font-size: 12px; color: var(--muted); max-width: 65ch; }
+
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+@media (max-width: 420px) {
+  h1 { font-size: 24px; }
+  .score-num { font-size: 36px; }
+  .end .big { font-size: 38px; }
+  .tile { padding: 7px; }
+  .actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .d.now, .pop, .spinning .wheel { animation: none; }
+}
+</style>
+
+<main class="shell">
+  <header class="top">
+    <div>
+      <h1>MERGE <span>RUSH</span></h1>
+      <p class="tag" data-i="tag"></p>
+    </div>
+    <div class="seg" role="group" aria-label="Language">
+      <button type="button" id="langVi" aria-pressed="false">VI</button>
+      <button type="button" id="langEn" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <section class="panel dash" aria-label="Status">
+    <div class="dash-top">
+      <div>
+        <h2 data-i="earned"></h2>
+        <output id="score" class="score-num">0</output>
+        <span id="rate" class="rate"></span>
+      </div>
+      <button type="button" id="newBtn" class="ghost" data-i="newRun"></button>
+    </div>
+    <div>
+      <div class="track-head"><b id="roundText"></b><span id="clockText"></span></div>
+      <div id="dots" class="dots" role="img" aria-label="Wheel track"></div>
+      <div class="legend">
+        <span><i class="nap"></i><span data-i="w_nap"></span></span>
+        <span><i class="jog"></i><span data-i="w_jog"></span></span>
+        <span><i class="zoomies"></i><span data-i="w_zoomies"></span></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Cage">
+    <div class="cage-head">
+      <h2 data-i="cage"></h2>
+      <div class="seg" role="group" aria-label="Mode">
+        <button type="button" id="modeDaily" aria-pressed="true" data-i="modeDaily"></button>
+        <button type="button" id="modeFree" aria-pressed="false" data-i="modeFree"></button>
+      </div>
+    </div>
+    <p id="seedNote" class="seed-note"></p>
+    <div id="board" class="board"></div>
+    <p id="detail" class="detail" aria-live="polite"></p>
+  </section>
+
+  <section id="actions" class="actions">
+    <button type="button" id="depositBtn" class="btn" data-i="deposit" disabled></button>
+    <button type="button" id="spinBtn" class="btn primary">
+      <svg class="wheel" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      </svg>
+      <span id="spinLabel"></span>
+    </button>
+  </section>
+
+  <section id="endPanel" class="panel end" hidden aria-live="polite">
+    <h3 id="endTitle"></h3>
+    <div id="endScore" class="big"></div>
+    <p id="endRank" class="rank"></p>
+    <p id="endBest" class="best"></p>
+    <div class="share">
+      <input id="shareText" type="text" readonly aria-label="Result">
+      <button type="button" id="copyBtn" class="btn" style="min-height:44px"></button>
+    </div>
+    <div class="end-actions">
+      <button type="button" id="againBtn" class="btn primary"></button>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Vault">
+    <div class="vault-head">
+      <h2 id="vaultTitle"></h2>
+      <p data-i="vaultHint"></p>
+    </div>
+    <div id="vault" class="vault-slots"></div>
+  </section>
+
+  <section class="panel log" aria-label="Log">
+    <h2 data-i="logTitle"></h2>
+    <ul id="logList" aria-live="polite"></ul>
+  </section>
+
+  <details class="rules">
+    <summary data-i="rulesTitle"></summary>
+    <ol>
+      <li data-i="rule1"></li>
+      <li data-i="rule2"></li>
+      <li data-i="rule3"></li>
+      <li data-i="rule4"></li>
+      <li data-i="rule5"></li>
+    </ol>
+  </details>
+
+  <p class="foot" data-i="footer"></p>
+</main>
+
+<script>
+/*LOGIC_START*/
+const MAX_LVL = 10, COLS = 4, ROWS = 3, SLOTS = COLS * ROWS, VAULT_MAX = 4, ROUNDS = 24, START_SQ = 3;
+const POWER = [0, 1000, 2200, 4840, 10648, 23426, 51536, 113380, 249436, 548769, 1207269];
+const WHEEL = {
+  nap:     { p: 0.45, mint: 0, clear: false },
+  jog:     { p: 0.40, mint: 1, clear: false },
+  zoomies: { p: 0.15, mint: 2, clear: true }
+};
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seedFrom(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function yieldOf(lvl) { return Math.round(POWER[lvl] / 100); }
+function place(s, lvl, cd) {
+  const i = s.board.indexOf(null);
+  if (i < 0) return -1;
+  s.board[i] = { id: s.nextId++, lvl: lvl, cd: cd || 0 };
+  return i;
+}
+function newGame(seed) {
+  const s = { seed: seed, rng: mulberry32(seed), round: 1, board: Array(SLOTS).fill(null), vault: [], earned: 0, nextId: 1, over: false, maxLvl: 1 };
+  for (let i = 0; i < START_SQ; i++) place(s, 1, 0);
+  return s;
+}
+function canMerge(s, i, j) {
+  const a = s.board[i], b = s.board[j];
+  return i !== j && !!a && !!b && a.lvl === b.lvl && a.lvl < MAX_LVL && a.cd === 0 && b.cd === 0 && !s.over;
+}
+function merge(s, i, j) {
+  if (!canMerge(s, i, j)) return 0;
+  const old = s.board[i].lvl;
+  s.board[i] = null;
+  s.board[j] = { id: s.nextId++, lvl: old + 1, cd: old };
+  if (old + 1 > s.maxLvl) s.maxLvl = old + 1;
+  return s.board[j].id;
+}
+function deposit(s, i) {
+  const q = s.board[i];
+  if (!q || s.vault.length >= VAULT_MAX || s.over) return false;
+  s.vault.push({ id: q.id, lvl: q.lvl });
+  if (q.lvl > s.maxLvl) s.maxLvl = q.lvl;
+  s.board[i] = null;
+  return true;
+}
+function vaultRate(s) { return s.vault.reduce(function (n, q) { return n + yieldOf(q.lvl); }, 0); }
+function rollWheel(rng) {
+  const r = rng();
+  if (r < WHEEL.nap.p) return 'nap';
+  if (r < WHEEL.nap.p + WHEEL.jog.p) return 'jog';
+  return 'zoomies';
+}
+function spin(s) {
+  if (s.over) return null;
+  const payout = vaultRate(s);
+  s.earned += payout;
+  for (const q of s.board) if (q && q.cd > 0) q.cd--;
+  const wheel = rollWheel(s.rng);
+  if (WHEEL[wheel].clear) for (const q of s.board) if (q) q.cd = 0;
+  const ev = { round: s.round, wheel: wheel, payout: payout, minted: [], lost: 0 };
+  if (s.round >= ROUNDS) { s.over = true; return ev; }
+  const n = 1 + WHEEL[wheel].mint;
+  for (let k = 0; k < n; k++) {
+    const i = place(s, 1, 0);
+    if (i < 0) ev.lost++; else ev.minted.push(s.board[i].id);
+  }
+  s.round++;
+  return ev;
+}
+/*LOGIC_END*/
+
+/* ---------- strings ---------- */
+const RANK_MIN = [0, 800, 2000, 3200, 4500];
+const T = {
+  vi: {
+    tag: 'Ghép Squeek, gửi vào kho, chạy theo bánh xe của hamster.',
+    earned: 'SQK kiếm được', newRun: 'Ván mới',
+    rate: '+{n} SQK mỗi vòng từ kho',
+    roundLine: 'Vòng {r}/{n}', clock: 'Giờ bánh xe {c} / 4h00',
+    w_nap: 'Ngủ', w_jog: 'Chạy bộ', w_zoomies: 'Zoomies',
+    cage: 'Chuồng', modeDaily: 'Thử thách ngày', modeFree: 'Chơi tự do',
+    seedDaily: 'Chuỗi bánh xe ngày {d} (UTC), giống nhau với mọi người chơi.',
+    seedFree: 'Chuỗi bánh xe ngẫu nhiên cho mỗi ván.',
+    hintIdle: 'Chạm một Squeek để chọn. Chạm Squeek thứ hai cùng cấp để ghép.',
+    selInfo: 'Cấp {l}, sức mạnh {p}. Gửi vào kho sẽ kiếm +{y} SQK mỗi vòng.',
+    selReady: ' Sẵn sàng ghép.', selCool: ' Còn {c} vòng hồi trước khi ghép được.', selMax: ' Đã là cấp cao nhất.',
+    vaultFull: 'Kho đã đầy.',
+    mergeDone: 'Ghép thành cấp {l}. Cần hồi {c} vòng trước khi ghép tiếp.',
+    depositDone: 'Đã gửi cấp {l} vào kho, kho kiếm thêm {y} SQK mỗi vòng.',
+    vaultTitle: 'Kho staking {a}/{m}', vaultHint: 'Gửi vào là không rút ra được. Mỗi vòng trả sức mạnh ÷ 100.',
+    vaultEmpty: 'Trống',
+    deposit: 'Gửi vào kho', spin: 'Quay bánh xe', spinning: 'Đang quay...',
+    logTitle: 'Nhật ký bánh xe',
+    logStart: 'Vòng 1 bắt đầu. Bạn có 3 Squeek cấp 1.',
+    logRound: 'Vòng {r}: hamster {w}.', logPay: 'Kho trả {p} SQK.',
+    e_nap: 'Chỉ có 1 Squeek mới.', e_jog: '2 Squeek mới.', e_zoomies: '3 Squeek mới và mọi cooldown được xóa.',
+    logLost: 'Chuồng đầy, mất {n} Squeek.',
+    wv_nap: 'ngủ', wv_jog: 'chạy bộ', wv_zoomies: 'lên cơn zoomies',
+    overTitle: 'Hết 4 giờ bánh xe', overBest: 'Kỷ lục của bạn: {b} SQK', overNew: 'Kỷ lục mới!',
+    ranks: ['Chuột thực tập', 'Chuột chạy bánh xe', 'Thợ đào hamster', 'Chủ trại chuột', 'Huyền thoại bánh xe'],
+    share: 'Merge Rush ({m}): {s} SQK, hạng {r}, Squeek cao nhất cấp {l}.',
+    shareDaily: 'ngày {d}', shareFree: 'chơi tự do',
+    copy: 'Sao chép kết quả', copied: 'Đã sao chép', copySel: 'Đã chọn, nhấn Ctrl+C', again: 'Chơi lại',
+    rulesTitle: 'Luật chơi',
+    rule1: 'Mỗi vòng là 10 phút của bánh xe. Một ván dài 24 vòng, tức 4 giờ.',
+    rule2: 'Ghép hai Squeek cùng cấp thành một Squeek cấp kế tiếp, mạnh hơn 10% so với hai con ghép lại. Sức mạnh cấp 1 là 1.000, mỗi cấp nhân 2,2 và cấp 10 là 1.207.269. Squeek vừa ghép phải hồi vài vòng mới ghép tiếp được.',
+    rule3: 'Gửi Squeek vào kho (tối đa 4, không rút ra được). Mỗi vòng, mỗi Squeek trong kho trả sức mạnh ÷ 100 SQK.',
+    rule4: 'Bấm Quay bánh xe để sang vòng sau. Mỗi vòng bạn nhận 1 Squeek cấp 1. Hamster chạy bộ (40%) cho thêm 1, lên cơn zoomies (15%) cho thêm 2 và xóa mọi cooldown, còn ngủ (45%) không thưởng. Chuồng đầy thì Squeek mới bị mất.',
+    rule5: 'Thử thách ngày dùng chung một chuỗi bánh xe cho mọi người chơi trong ngày (theo giờ UTC), nên điểm so sánh công bằng được.',
+    footer: 'Sản phẩm của cộng đồng, không liên kết với Squeekchain. Luật ghép theo whitepaper (cấp 1 đến 10, ×2,2, +10%). SQK trong game chỉ là điểm số, không có giá trị.',
+    tileReady: 'Squeek cấp {l}, sẵn sàng', tileCool: 'Squeek cấp {l}, hồi {c} vòng'
+  },
+  en: {
+    tag: "Merge Squeeks, fill the vault, ride the hamster's wheel.",
+    earned: 'SQK earned', newRun: 'New run',
+    rate: '+{n} SQK per round from the vault',
+    roundLine: 'Round {r}/{n}', clock: 'Wheel time {c} of 4h00',
+    w_nap: 'Nap', w_jog: 'Jog', w_zoomies: 'Zoomies',
+    cage: 'Cage', modeDaily: 'Daily run', modeFree: 'Free play',
+    seedDaily: 'Wheel sequence for {d} (UTC), identical for every player.',
+    seedFree: 'A random wheel sequence for each run.',
+    hintIdle: 'Tap a Squeek to select it. Tap a second one of the same level to merge.',
+    selInfo: 'Level {l}, power {p}. Depositing it earns +{y} SQK per round.',
+    selReady: ' Ready to merge.', selCool: ' {c} more rounds of cooldown before it can merge.', selMax: ' Already the top level.',
+    vaultFull: 'The vault is full.',
+    mergeDone: 'Merged into level {l}. It needs {c} rounds of cooldown before merging again.',
+    depositDone: 'Deposited level {l}. The vault now earns {y} more SQK per round.',
+    vaultTitle: 'Staking vault {a}/{m}', vaultHint: 'Deposits cannot be withdrawn. Each round pays power ÷ 100.',
+    vaultEmpty: 'Empty',
+    deposit: 'Deposit', spin: 'Spin the wheel', spinning: 'Spinning...',
+    logTitle: 'Wheel log',
+    logStart: 'Round 1 begins. You hold 3 level 1 Squeeks.',
+    logRound: 'Round {r}: the hamster {w}.', logPay: 'The vault paid {p} SQK.',
+    e_nap: 'Only 1 new Squeek.', e_jog: '2 new Squeeks.', e_zoomies: '3 new Squeeks and every cooldown cleared.',
+    logLost: 'Cage full, {n} Squeek lost.',
+    wv_nap: 'napped', wv_jog: 'jogged', wv_zoomies: 'got the zoomies',
+    overTitle: 'Four wheel hours done', overBest: 'Your best: {b} SQK', overNew: 'New best!',
+    ranks: ['Wheel Intern', 'Wheel Runner', 'Hamster Miner', 'Cage Boss', 'Wheel Legend'],
+    share: 'Merge Rush ({m}): {s} SQK, rank {r}, top Squeek level {l}.',
+    shareDaily: '{d}', shareFree: 'free play',
+    copy: 'Copy result', copied: 'Copied', copySel: 'Selected, press Ctrl+C', again: 'Play again',
+    rulesTitle: 'How to play',
+    rule1: 'Each round is 10 minutes of wheel time. A run lasts 24 rounds, which is 4 hours.',
+    rule2: 'Merge two Squeeks of the same level into one of the next level, worth 10% more than the pair. Level 1 power is 1,000, each level multiplies it by 2.2, and level 10 reaches 1,207,269. A freshly merged Squeek needs a few rounds of cooldown before it can merge again.',
+    rule3: 'Deposit Squeeks into the vault (4 slots, no withdrawals). Each round, every vault Squeek pays power ÷ 100 SQK.',
+    rule4: 'Press Spin the wheel to move to the next round. Every round brings 1 level 1 Squeek. A jog (40%) adds 1 more, the zoomies (15%) add 2 and clear every cooldown, and a nap (45%) adds nothing. If the cage is full, the new Squeek is lost.',
+    rule5: 'The daily run uses one wheel sequence for every player that day (UTC), so scores compare fairly.',
+    footer: 'Community-made, not affiliated with Squeekchain. Merge rules follow the whitepaper (levels 1 to 10, ×2.2, +10%). SQK here is a game score with no value.',
+    tileReady: 'Level {l} Squeek, ready', tileCool: 'Level {l} Squeek, {c} rounds cooldown'
+  }
+};
+
+/* ---------- sprite ---------- */
+const SPR = [
+  '..oo....oo..',
+  '.obbo..obbo.',
+  '.obbbooobbbo',
+  'obbbbbbbbbbo',
+  'obbebbbbebbo',
+  'obbbbbbbbbbo',
+  'oblllnnlllbo',
+  'obllllllllbo',
+  '.obllllllbo.',
+  '..oobbbboo..',
+  '....oooo....'
+];
+const RAMP = [null, '#B98B5E', '#D9A441', '#8FB339', '#2FA37A', '#2A9DB5', '#3B6FD9', '#6A4FD6', '#B04BC8', '#E0457B', '#F2B705'];
+const spriteCache = {};
+function sprite(lvl) {
+  if (spriteCache[lvl]) return spriteCache[lvl];
+  let out = '';
+  SPR.forEach(function (row, y) {
+    for (let x = 0; x < row.length; x++) {
+      const c = row[x];
+      if (c === '.') continue;
+      const fill = c === 'b' ? RAMP[lvl] : c === 'o' ? 'var(--spr-o)' : c === 'e' ? 'var(--spr-e)' : c === 'l' ? 'var(--spr-l)' : 'var(--spr-n)';
+      out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"/>';
+    }
+  });
+  return (spriteCache[lvl] = '<svg viewBox="0 0 12 11" shape-rendering="crispEdges" aria-hidden="true">' + out + '</svg>');
+}
+
+/* ---------- app state ---------- */
+const $ = function (id) { return document.getElementById(id); };
+const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lang = 'en', mode = 'daily', S = null, sel = null, busy = false, pops = new Set(), hist = [], wheels = [], flash = null, result = null;
+
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function t(key, p) {
+  let s = (T[lang] && T[lang][key] !== undefined) ? T[lang][key] : key;
+  if (p) for (const k in p) s = s.split('{' + k + '}').join(p[k]);
+  return s;
+}
+function fmt(n) { return Number(n).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US'); }
+function utcDate() { return new Date().toISOString().slice(0, 10); }
+function rankOf(score) { let r = 0; RANK_MIN.forEach(function (m, i) { if (score >= m) r = i; }); return r; }
+function bestKey() { return mode === 'daily' ? 'mr:best:daily:' + utcDate() : 'mr:best:free'; }
+
+function startGame() {
+  const seed = mode === 'daily' ? seedFrom('merge-rush-' + utcDate()) : (Math.random() * 4294967296) >>> 0;
+  S = newGame(seed);
+  sel = null; busy = false; pops = new Set(); hist = [{ type: 'start' }]; wheels = []; flash = null; result = null;
+  render();
+}
+
+/* ---------- render ---------- */
+function applyStatic() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i]').forEach(function (el) { el.textContent = t(el.dataset.i); });
+  $('langVi').setAttribute('aria-pressed', String(lang === 'vi'));
+  $('langEn').setAttribute('aria-pressed', String(lang === 'en'));
+  $('copyBtn').textContent = t('copy');
+  $('againBtn').textContent = t('again');
+}
+function tileLabel(q) { return q.cd > 0 ? t('tileCool', { l: q.lvl, c: q.cd }) : t('tileReady', { l: q.lvl }); }
+
+function renderBoard() {
+  let html = '';
+  for (let i = 0; i < SLOTS; i++) {
+    const q = S.board[i];
+    if (!q) { html += '<div class="slot" aria-hidden="true"></div>'; continue; }
+    const cls = ['tile'];
+    if (q.cd > 0) cls.push('cool');
+    if (q.lvl === MAX_LVL) cls.push('max');
+    if (sel === i) cls.push('sel');
+    if (sel !== null && sel !== i && canMerge(S, sel, i)) cls.push('pair');
+    if (pops.has(q.id)) cls.push('pop');
+    html += '<button type="button" class="' + cls.join(' ') + '" data-i="' + i + '" aria-pressed="' + (sel === i) + '" aria-label="' + tileLabel(q) + '"' + (S.over || busy ? ' disabled' : '') + '>' +
+      sprite(q.lvl) + '<span class="chip lv">L' + q.lvl + '</span>' + (q.cd > 0 ? '<span class="chip cd">CD' + q.cd + '</span>' : '') + '</button>';
+  }
+  $('board').innerHTML = html;
+}
+function renderVault() {
+  let html = '';
+  for (let i = 0; i < VAULT_MAX; i++) {
+    const q = S.vault[i];
+    if (!q) { html += '<div class="vt"><div class="slot" style="width:100%" aria-hidden="true"></div><span class="y" style="color:var(--muted)">' + t('vaultEmpty') + '</span></div>'; continue; }
+    html += '<div class="vt"><div class="tile' + (q.lvl === MAX_LVL ? ' max' : '') + (pops.has(q.id) ? ' pop' : '') + '" role="img" aria-label="' + t('tileReady', { l: q.lvl }) + '">' + sprite(q.lvl) +
+      '<span class="chip lv">L' + q.lvl + '</span></div><span class="y">+' + fmt(yieldOf(q.lvl)) + '</span></div>';
+  }
+  $('vault').innerHTML = html;
+}
+function renderDots() {
+  let html = '';
+  for (let i = 0; i < ROUNDS; i++) {
+    let c = 'd';
+    if (i < wheels.length) c += ' ' + wheels[i];
+    else if (i === wheels.length && !S.over) c += ' now';
+    html += '<i class="' + c + '"></i>';
+  }
+  $('dots').innerHTML = html;
+}
+function detailText() {
+  if (S.over) return '';
+  if (sel !== null && S.board[sel]) {
+    const q = S.board[sel];
+    let s = t('selInfo', { l: q.lvl, p: fmt(POWER[q.lvl]), y: fmt(yieldOf(q.lvl)) });
+    s += q.cd > 0 ? t('selCool', { c: q.cd }) : (q.lvl >= MAX_LVL ? t('selMax') : t('selReady'));
+    if (S.vault.length >= VAULT_MAX) s += ' ' + t('vaultFull');
+    return s;
+  }
+  return flash || t('hintIdle');
+}
+function logLine(h) {
+  if (h.type === 'start') return t('logStart');
+  let s = t('logRound', { r: h.round, w: t('wv_' + h.wheel) });
+  if (h.payout) s += ' ' + t('logPay', { p: fmt(h.payout) });
+  s += ' ' + t('e_' + h.wheel);
+  if (h.lost) s += ' ' + t('logLost', { n: h.lost });
+  return s;
+}
+function renderEnd() {
+  const over = S.over;
+  $('endPanel').hidden = !over;
+  $('actions').hidden = over;
+  if (!over) return;
+  const r = rankOf(S.earned);
+  $('endTitle').textContent = t('overTitle');
+  $('endScore').textContent = fmt(S.earned) + ' SQK';
+  $('endRank').textContent = t('ranks')[r];
+  $('endBest').textContent = t('overBest', { b: fmt(result ? result.best : S.earned) }) + (result && result.isNew ? ' · ' + t('overNew') : '');
+  const modeName = mode === 'daily' ? t('shareDaily', { d: utcDate() }) : t('shareFree');
+  $('shareText').value = t('share', { m: modeName, s: fmt(S.earned), r: t('ranks')[r], l: S.maxLvl });
+}
+function render() {
+  applyStatic();
+  $('score').textContent = fmt(S.earned);
+  $('rate').textContent = t('rate', { n: fmt(vaultRate(S)) });
+  const elapsed = S.over ? ROUNDS * 10 : (S.round - 1) * 10;
+  $('roundText').textContent = t('roundLine', { r: S.round, n: ROUNDS });
+  $('clockText').textContent = t('clock', { c: Math.floor(elapsed / 60) + 'h' + String(elapsed % 60).padStart(2, '0') });
+  $('modeDaily').setAttribute('aria-pressed', String(mode === 'daily'));
+  $('modeFree').setAttribute('aria-pressed', String(mode === 'free'));
+  $('seedNote').textContent = mode === 'daily' ? t('seedDaily', { d: utcDate() }) : t('seedFree');
+  $('vaultTitle').textContent = t('vaultTitle', { a: S.vault.length, m: VAULT_MAX });
+  renderDots();
+  renderBoard();
+  renderVault();
+  $('detail').textContent = detailText();
+  $('depositBtn').disabled = busy || S.over || sel === null || S.vault.length >= VAULT_MAX;
+  $('spinBtn').disabled = busy || S.over;
+  $('spinLabel').textContent = busy ? t('spinning') : t('spin');
+  $('logList').innerHTML = hist.slice(0, 5).map(function (h) { return '<li>' + logLine(h) + '</li>'; }).join('');
+  renderEnd();
+  pops = new Set();
+}
+
+/* ---------- events ---------- */
+$('board').addEventListener('click', function (e) {
+  const b = e.target.closest('.tile');
+  if (!b || busy || S.over) return;
+  const i = Number(b.dataset.i);
+  flash = null;
+  if (sel === null) sel = i;
+  else if (sel === i) sel = null;
+  else if (canMerge(S, sel, i)) {
+    const id = merge(S, sel, i);
+    pops.add(id);
+    const q = S.board[i];
+    flash = t('mergeDone', { l: q.lvl, c: q.cd });
+    sel = null;
+  } else sel = i;
+  render();
+});
+$('depositBtn').addEventListener('click', function () {
+  if (sel === null || busy || S.over) return;
+  const q = S.board[sel];
+  if (q && deposit(S, sel)) {
+    pops.add(q.id);
+    flash = t('depositDone', { l: q.lvl, y: fmt(yieldOf(q.lvl)) });
+    sel = null;
+    render();
+  }
+});
+$('spinBtn').addEventListener('click', function () {
+  if (busy || S.over) return;
+  busy = true; sel = null; flash = null;
+  const btn = $('spinBtn');
+  btn.classList.add('spinning');
+  render();
+  setTimeout(function () {
+    const ev = spin(S);
+    btn.classList.remove('spinning');
+    busy = false;
+    if (ev) {
+      wheels.push(ev.wheel);
+      hist.unshift(ev);
+      ev.minted.forEach(function (id) { pops.add(id); });
+      if (S.over) {
+        const key = bestKey();
+        const prev = Number(lsGet(key)) || 0;
+        const isNew = S.earned > prev;
+        if (isNew) lsSet(key, String(S.earned));
+        result = { best: Math.max(prev, S.earned), isNew: isNew && S.earned > 0 };
+      }
+    }
+    render();
+  }, reduce ? 0 : 850);
+});
+$('newBtn').addEventListener('click', startGame);
+$('againBtn').addEventListener('click', startGame);
+$('modeDaily').addEventListener('click', function () { if (mode !== 'daily') { mode = 'daily'; startGame(); } });
+$('modeFree').addEventListener('click', function () { if (mode !== 'free') { mode = 'free'; startGame(); } });
+function setLang(l) { lang = l; lsSet('mr:lang', l); render(); }
+$('langVi').addEventListener('click', function () { setLang('vi'); });
+$('langEn').addEventListener('click', function () { setLang('en'); });
+$('copyBtn').addEventListener('click', function () {
+  const el = $('shareText'), btn = $('copyBtn');
+  const done = function (msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = t('copy'); }, 1800); };
+  const fallback = function () { el.focus(); el.select(); done(t('copySel')); };
+  try {
+    navigator.clipboard.writeText(el.value).then(function () { done(t('copied')); }, fallback);
+  } catch (e) { fallback(); }
+});
+
+/* ---------- boot ---------- */
+(function () {
+  const saved = lsGet('mr:lang');
+  const langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en']);
+  lang = saved === 'vi' || saved === 'en' ? saved : (langs.some(function (l) { return /^vi/i.test(l); }) ? 'vi' : 'en');
+  startGame();
+})();
+</script>
+
+</body></html>
